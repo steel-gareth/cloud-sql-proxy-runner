@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -30,7 +31,11 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Version = fmt.Sprintf("%s (commit: %s, built: %s)", version, gitCommit, buildTime)
+	built := buildTime
+	if t, err := time.Parse("20060102150405", buildTime); err == nil {
+		built = t.UTC().Format("2006-01-02 15:04:05 UTC")
+	}
+	rootCmd.Version = fmt.Sprintf("%s (commit: %s, built: %s)", version, gitCommit, built)
 
 	home, _ := os.UserHomeDir()
 	defaultConfig := filepath.Join(home, ".config", "cloud-sql-proxy-runner", "config.yaml")
