@@ -20,6 +20,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type daemonAction int
+
+const (
+	daemonStart   daemonAction = iota
+	daemonKeep
+	daemonRestart
+)
+
 var daemonFlag bool
 
 var startCmd = &cobra.Command{
@@ -58,15 +66,12 @@ func runStartForeground() error {
 	stateDir := proxy.StateDir()
 
 	// Check for existing daemon
-	pid, err := proxy.ReadPID(stateDir)
-	if err == nil && proxy.IsRunning(pid) {
-		// Compare running config with desired config
-		state, stateErr := proxy.ReadState(stateDir)
-		if stateErr == nil && proxiesEqual(state.Proxies, cfg.Proxies) {
-			fmt.Printf("Daemon already running (pid %d)\n", pid)
-			return nil
-		}
-		// Config has changed (or state unreadable) — restart daemon
+	action, pid := checkDaemon(stateDir, cfg.Proxies)
+	switch action {
+	case daemonKeep:
+		fmt.Printf("Daemon already running (pid %d)\n", pid)
+		return nil
+	case daemonRestart:
 		fmt.Println("Config changed, restarting daemon...")
 		if err := stopDaemon(pid, stateDir); err != nil {
 			return fmt.Errorf("stopping old daemon: %w", err)
@@ -208,12 +213,35 @@ func (r *realDialer) Close() error {
 	return r.dialer.Close()
 }
 
+func checkDaemon(stateDir string, proxies []config.ProxyEntry) (daemonAction, int) {
+	pid, err := proxy.ReadPID(stateDir)
+	if err != nil {
+		return daemonStart, 0
+	}
+	if !proxy.IsRunning(pid) {
+		return daemonStart, 0
+	}
+	state, err := proxy.ReadState(stateDir)
+	if err != nil {
+		return daemonRestart, pid
+	}
+	if !proxiesEqual(state.Proxies, proxies) {
+		return daemonRestart, pid
+	}
+	return daemonKeep, pid
+}
+
 func proxiesEqual(a, b []config.ProxyEntry) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	for i := range a {
-		if a[i] != b[i] {
+	counts := make(map[config.ProxyEntry]int, len(a))
+	for _, e := range a {
+		counts[e]++
+	}
+	for _, e := range b {
+		counts[e]--
+		if counts[e] < 0 {
 			return false
 		}
 	}
