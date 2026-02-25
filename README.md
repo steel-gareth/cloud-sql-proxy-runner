@@ -8,10 +8,10 @@ Uses Go SDKs directly (no `cloud-sql-proxy` or `gcloud` CLI binaries required at
 
 ```sh
 # Nix (recommended)
-nix profile install github:steel-gareth/cloud-proxy
+nix profile install github:steel-gareth/cloud-proxy-runner
 
 # Or run without installing
-nix run github:steel-gareth/cloud-proxy -- --help
+nix run github:steel-gareth/cloud-proxy-runner -- --help
 
 # Or build from source
 go install .
