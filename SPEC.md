@@ -1,4 +1,4 @@
-# Spec: `cloud-proxy` Go CLI
+# Spec: `cloud-sql-proxy-runner` Go CLI
 
 ## Context
 
@@ -11,13 +11,13 @@ We manually run `cloud-sql-proxy` instances for prod/staging databases, each on 
 ## Commands
 
 ```
-cloud-proxy start              # Start daemon with all proxies (idempotent)
-cloud-proxy stop               # Stop the daemon
-cloud-proxy list               # List proxies with status, ports
-cloud-proxy list --show-passwords  # Include passwords in connection strings
+cloud-sql-proxy-runner start              # Start daemon with all proxies (idempotent)
+cloud-sql-proxy-runner stop               # Stop the daemon
+cloud-sql-proxy-runner list               # List proxies with status, ports
+cloud-sql-proxy-runner list --show-passwords  # Include passwords in connection strings
 ```
 
-Global flag: `--config <path>` (default: `~/.config/cloud-proxy/config.yaml`)
+Global flag: `--config <path>` (default: `~/.config/cloud-sql-proxy-runner/config.yaml`)
 
 ---
 
@@ -113,17 +113,17 @@ The `cloudsqlconn.Dialer` handles TLS, certificate rotation, and IAM auth automa
 ### `start`
 1. Run preflight: check ADC credentials exist via `google.FindDefaultCredentials()`
 2. Load + validate config
-3. Check for existing daemon: read PID file `~/.cloud-proxy/daemon.pid`
+3. Check for existing daemon: read PID file `~/.cloud-sql-proxy-runner/daemon.pid`
    - If PID exists and process is alive → print `Daemon already running (pid <N>)`, exit 0 (idempotent)
    - If stale PID file → clean it up, continue
 4. Daemonize: re-exec itself with `--daemon` internal flag, detached from terminal
 5. The daemon process:
-   - Writes PID to `~/.cloud-proxy/daemon.pid`
+   - Writes PID to `~/.cloud-sql-proxy-runner/daemon.pid`
    - Creates `cloudsqlconn.NewDialer()` (one shared dialer)
    - For each proxy in config: start a TCP listener goroutine on the configured port
-   - Writes state file `~/.cloud-proxy/state.json` with all proxy details
+   - Writes state file `~/.cloud-sql-proxy-runner/state.json` with all proxy details
    - Handles SIGTERM/SIGINT: close all listeners, close dialer, remove PID + state files, exit
-   - Logs to `~/.cloud-proxy/daemon.log`
+   - Logs to `~/.cloud-sql-proxy-runner/daemon.log`
 6. Parent process waits briefly, confirms ports are accepting connections
 7. Prints:
    ```
@@ -132,7 +132,7 @@ The `cloudsqlconn.Dialer` handles TLS, certificate rotation, and IAM auth automa
    ```
 
 ### `stop`
-1. Read `~/.cloud-proxy/daemon.pid`
+1. Read `~/.cloud-sql-proxy-runner/daemon.pid`
 2. If no PID file or process dead → print `No daemon is running.`, exit 0
 3. Send SIGTERM to PID, wait up to 5s for exit
 4. If still alive → SIGKILL
@@ -141,7 +141,7 @@ The `cloudsqlconn.Dialer` handles TLS, certificate rotation, and IAM auth automa
 
 ### `list`
 1. Load config
-2. Read `~/.cloud-proxy/state.json` and check if daemon PID is alive
+2. Read `~/.cloud-sql-proxy-runner/state.json` and check if daemon PID is alive
 3. If `--show-passwords`, fetch secrets via Secret Manager SDK (in parallel via `errgroup`)
 4. Print table:
 
@@ -173,10 +173,10 @@ Note: `gcloud` CLI is only needed by the user once to set up ADC. After that, th
 
 ---
 
-## State Directory: `~/.cloud-proxy/`
+## State Directory: `~/.cloud-sql-proxy-runner/`
 
 ```
-~/.cloud-proxy/
+~/.cloud-sql-proxy-runner/
 ├── daemon.pid          # Single PID for the daemon process
 ├── daemon.log          # Daemon stdout/stderr
 └── state.json          # All proxy details for `list` to read
@@ -202,7 +202,7 @@ Note: `gcloud` CLI is only needed by the user once to set up ADC. After that, th
 valencia/
 ├── main.go
 ├── go.mod
-├── cloud-proxy.yaml.example
+├── cloud-sql-proxy-runner.example.yaml
 ├── cmd/
 │   ├── root.go         # Root cobra cmd, --config flag, config loading
 │   ├── start.go        # Start command + daemonization
@@ -243,7 +243,7 @@ valencia/
 7. `cmd/stop.go` — wire up stop
 8. `internal/secrets/secrets.go` — Secret Manager SDK
 9. `cmd/list.go` — wire up list + table formatting
-10. `cloud-proxy.yaml.example`
+10. `cloud-sql-proxy-runner.example.yaml`
 
 ---
 
@@ -294,7 +294,7 @@ cmd/
 - Write + read state.json roundtrip
 - `IsRunning()` returns true for own PID, false for non-existent PID
 - Stale PID file cleanup (PID file exists but process dead)
-- State directory creation when `~/.cloud-proxy/` doesn't exist
+- State directory creation when `~/.cloud-sql-proxy-runner/` doesn't exist
 
 **`internal/secrets/secrets_test.go`**
 - Inject a mock Secret Manager client (interface)
@@ -355,12 +355,12 @@ Production code passes the real SDK implementations; tests pass mocks.
 
 ## Verification
 
-1. `go build -o cloud-proxy .` — compiles
-2. Create config at `~/.config/cloud-proxy/config.yaml` with prod+staging entries
-3. `./cloud-proxy start` — daemon starts, ports accessible
-4. `./cloud-proxy start` — idempotent, prints "already running"
-5. `./cloud-proxy list` — shows both as running with project + database columns
-6. `./cloud-proxy list --show-passwords` — shows passwords in connection strings
-7. `./cloud-proxy stop` — daemon stops, ports freed
-8. `./cloud-proxy list` — shows both as stopped
-9. Revoke ADC (`rm ~/.config/gcloud/application_default_credentials.json`), run `./cloud-proxy start` — clear error with instructions
+1. `go build -o cloud-sql-proxy-runner .` — compiles
+2. Create config at `~/.config/cloud-sql-proxy-runner/config.yaml` with prod+staging entries
+3. `./cloud-sql-proxy-runner start` — daemon starts, ports accessible
+4. `./cloud-sql-proxy-runner start` — idempotent, prints "already running"
+5. `./cloud-sql-proxy-runner list` — shows both as running with project + database columns
+6. `./cloud-sql-proxy-runner list --show-passwords` — shows passwords in connection strings
+7. `./cloud-sql-proxy-runner stop` — daemon stops, ports freed
+8. `./cloud-sql-proxy-runner list` — shows both as stopped
+9. Revoke ADC (`rm ~/.config/gcloud/application_default_credentials.json`), run `./cloud-sql-proxy-runner start` — clear error with instructions

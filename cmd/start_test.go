@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"cloud-proxy/internal/config"
-	"cloud-proxy/internal/proxy"
+	"cloud-sql-proxy-runner/internal/config"
+	"cloud-sql-proxy-runner/internal/proxy"
 )
 
 var (

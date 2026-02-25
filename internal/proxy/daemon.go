@@ -10,11 +10,11 @@ import (
 	"syscall"
 	"time"
 
-	"cloud-proxy/internal/config"
+	"cloud-sql-proxy-runner/internal/config"
 )
 
 const (
-	DefaultStateDir = ".cloud-proxy"
+	DefaultStateDir = ".cloud-sql-proxy-runner"
 	PIDFile         = "daemon.pid"
 	StateFile       = "state.json"
 	LogFile         = "daemon.log"

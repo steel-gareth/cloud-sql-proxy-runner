@@ -6,7 +6,7 @@ import (
 	"syscall"
 	"time"
 
-	"cloud-proxy/internal/proxy"
+	"cloud-sql-proxy-runner/internal/proxy"
 
 	"github.com/spf13/cobra"
 )

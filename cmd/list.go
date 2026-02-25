@@ -6,10 +6,10 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"cloud-proxy/internal/config"
-	"cloud-proxy/internal/preflight"
-	"cloud-proxy/internal/proxy"
-	"cloud-proxy/internal/secrets"
+	"cloud-sql-proxy-runner/internal/config"
+	"cloud-sql-proxy-runner/internal/preflight"
+	"cloud-sql-proxy-runner/internal/proxy"
+	"cloud-sql-proxy-runner/internal/secrets"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/spf13/cobra"
