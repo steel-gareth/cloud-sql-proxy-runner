@@ -1,0 +1,8 @@
+proxies:
+  - instance: "org:us-central1:database"
+    port: 5432
+    secret: "db-user-password"
+
+  - instance: "org-staging:us-central1:database"
+    port: 5433
+    secret: "db-user-password"
