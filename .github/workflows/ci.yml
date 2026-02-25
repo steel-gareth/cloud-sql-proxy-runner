@@ -19,5 +19,5 @@ jobs:
         with:
           go-version: '1.25.0'
       - run: go mod verify
-      - run: go build -o cloud-proxy .
+      - run: go build -o cloud-sql-proxy-runner .
       - run: go test -race -count=1 ./...

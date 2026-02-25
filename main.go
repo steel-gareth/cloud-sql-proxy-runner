@@ -1,6 +1,6 @@
 package main
 
-import "cloud-proxy/cmd"
+import "cloud-sql-proxy-runner/cmd"
 
 func main() {
 	cmd.Execute()

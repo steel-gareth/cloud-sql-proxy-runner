@@ -1,4 +1,4 @@
-module cloud-proxy
+module cloud-sql-proxy-runner
 
 go 1.25.0
 

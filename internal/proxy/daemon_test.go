@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"cloud-proxy/internal/config"
+	"cloud-sql-proxy-runner/internal/config"
 )
 
 func TestWriteReadPIDRoundtrip(t *testing.T) {

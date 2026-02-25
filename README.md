@@ -1,4 +1,4 @@
-# cloud-proxy
+# cloud-sql-proxy-runner
 
 Manage Cloud SQL proxy connections from a single YAML config. Start, stop, and list proxies with one command — no need to run multiple `cloud-sql-proxy` instances manually.
 
@@ -24,7 +24,7 @@ go install .
    gcloud auth application-default login
    ```
 
-2. Create a config file at `~/.config/cloud-proxy/config.yaml`:
+2. Create a config file at `~/.config/cloud-sql-proxy-runner/config.yaml`:
    ```yaml
    proxies:
      - instance: "my-project:us-central1:my-database"
@@ -43,10 +43,10 @@ go install .
 ## Usage
 
 ```sh
-cloud-proxy start                  # Start daemon with all proxies (idempotent)
-cloud-proxy stop                   # Stop the daemon
-cloud-proxy list                   # List proxies with status and ports
-cloud-proxy list --show-passwords  # Include passwords from Secret Manager
+cloud-sql-proxy-runner start                  # Start daemon with all proxies (idempotent)
+cloud-sql-proxy-runner stop                   # Stop the daemon
+cloud-sql-proxy-runner list                   # List proxies with status and ports
+cloud-sql-proxy-runner list --show-passwords  # Include passwords from Secret Manager
 ```
 
 Use `--config <path>` to specify a different config file.
@@ -73,10 +73,10 @@ With `--show-passwords`, fetches secrets from Secret Manager in parallel and add
 
 ## State directory
 
-Runtime files are stored in `~/.cloud-proxy/`:
+Runtime files are stored in `~/.cloud-sql-proxy-runner/`:
 
 ```
-~/.cloud-proxy/
+~/.cloud-sql-proxy-runner/
 ├── daemon.pid    # Daemon process ID
 ├── daemon.log    # Daemon stdout/stderr
 └── state.json    # Proxy details for `list`
