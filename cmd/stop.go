@@ -34,16 +34,25 @@ func runStop(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	if err := stopDaemon(pid, stateDir); err != nil {
+		return err
+	}
+	fmt.Println("Daemon stopped.")
+	return nil
+}
+
+// stopDaemon sends SIGTERM to the given pid, waits up to 5s, then SIGKILL if needed.
+// It cleans up state files in all cases.
+func stopDaemon(pid int, stateDir string) error {
 	proc, err := os.FindProcess(pid)
 	if err != nil {
-		fmt.Println("No daemon is running.")
+		proxy.RemoveStateFiles(stateDir)
 		return nil
 	}
 
 	// Send SIGTERM
 	if err := proc.Signal(syscall.SIGTERM); err != nil {
 		proxy.RemoveStateFiles(stateDir)
-		fmt.Println("No daemon is running.")
 		return nil
 	}
 
@@ -52,7 +61,6 @@ func runStop(cmd *cobra.Command, args []string) error {
 	for time.Now().Before(deadline) {
 		if !proxy.IsRunning(pid) {
 			proxy.RemoveStateFiles(stateDir)
-			fmt.Println("Daemon stopped.")
 			return nil
 		}
 		time.Sleep(100 * time.Millisecond)
@@ -62,6 +70,5 @@ func runStop(cmd *cobra.Command, args []string) error {
 	proc.Signal(syscall.SIGKILL)
 	time.Sleep(100 * time.Millisecond)
 	proxy.RemoveStateFiles(stateDir)
-	fmt.Println("Daemon stopped.")
 	return nil
 }
