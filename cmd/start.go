@@ -60,8 +60,17 @@ func runStartForeground() error {
 	// Check for existing daemon
 	pid, err := proxy.ReadPID(stateDir)
 	if err == nil && proxy.IsRunning(pid) {
-		fmt.Printf("Daemon already running (pid %d)\n", pid)
-		return nil
+		// Compare running config with desired config
+		state, stateErr := proxy.ReadState(stateDir)
+		if stateErr == nil && proxiesEqual(state.Proxies, cfg.Proxies) {
+			fmt.Printf("Daemon already running (pid %d)\n", pid)
+			return nil
+		}
+		// Config has changed (or state unreadable) — restart daemon
+		fmt.Println("Config changed, restarting daemon...")
+		if err := stopDaemon(pid, stateDir); err != nil {
+			return fmt.Errorf("stopping old daemon: %w", err)
+		}
 	}
 
 	// Clean up stale PID file if any
@@ -197,4 +206,16 @@ func (r *realDialer) Dial(ctx context.Context, instance string) (net.Conn, error
 
 func (r *realDialer) Close() error {
 	return r.dialer.Close()
+}
+
+func proxiesEqual(a, b []config.ProxyEntry) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
